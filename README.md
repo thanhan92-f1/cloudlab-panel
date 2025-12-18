@@ -36,11 +36,11 @@ Laranode can be installed on a FRESH VPS or dedicated server.
 
 ### Quick Install
 ```bash
-curl -sSL https://raw.githubusercontent.com/crivion/laranode/refs/heads/main/laranode-scripts/bin/laranode-installer.sh | bash
+curl -sSL https://raw.githubusercontent.com/thanhan92-f1/cloudlab-panel/refs/heads/main/laranode-scripts/bin/laranode-installer.sh | bash
 ```
 
 ## Getting Started
-Once installed, access Laranode via your browser:
+Once installed, access CloudLab Panel via your browser:
 ```
 http://your-server-ip
 OR if you pointed your domain/subdomain
@@ -74,6 +74,10 @@ Login with the credentials provided during installation.
 
 ## Contributing
 Laranode is open-source and welcomes contributions! Feel free to submit issues, feature requests, or pull requests.
+
+## Today's Commits (2025-12-19)
+
+- Initial commit
 
 ## License
 Laranode is open-source and released under the [MIT license](https://opensource.org/licenses/MIT).
