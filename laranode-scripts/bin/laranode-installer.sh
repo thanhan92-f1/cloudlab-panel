@@ -2,11 +2,15 @@
 #!/bin/bash
 
 # Hiển thị logo Laranode
-echo -e "\033[36m"
-echo '      ______   __        ______   __    __  _______   __         ______   _______         _______    ______   __    __  ________  __       '
-echo '     /      \ |  \      /      \ |  \  |  \|       \ |  \       /      \ |       \       |       \  /      \ |  \  |  \|        \|  \      '
-echo '    |  $$$$$$\| $$     |  $$$$$$\| $$  | $$| $$$$$$$\| $$      |  $$$$$$\| $$$$$$$\      | $$$$$$$\|  $$$$$$\| $$\ | $$| $$$$$$$$| $$      '
-echo '    | $$   \$$| $$     | $$  | $$| $$  | $$| $$  | $$| $$      | $$__| $$| $$__/ $$      | $$__/ $$| $$__| $$| $$$\| $$| $$__    | $$      '
+echo -e "\033[34m"
+echo "--------------------------------------------------------------------------------"
+echo "Cloning Laranode"
+git clone https://github.com/thanhan92-f1/cloudlab-panel.git /home/laranode_ln/panel
+if [ ! -f /home/laranode_ln/panel/artisan ]; then
+    echo "Clone failed hoặc thiếu file artisan! Kiểm tra lại repo hoặc kết nối mạng."
+    exit 1
+fi
+echo "--------------------------------------------------------------------------------"
 echo '    | $$      | $$     | $$  | $$| $$  | $$| $$  | $$| $$      | $$    $$| $$    $$      | $$    $$| $$    $$| $$$$\ $$| $$  \   | $$      '
 echo '    | $$   __ | $$     | $$  | $$| $$  | $$| $$  | $$| $$      | $$$$$$$$| $$$$$$$\      | $$$$$$$ | $$$$$$$$| $$\$$ $$| $$$$$   | $$      '
 echo '    | $$__/  \| $$_____| $$__/ $$| $$__/ $$| $$__/ $$| $$_____ | $$  | $$| $$__/ $$      | $$      | $$  | $$| $$ \$$$$| $$_____ | $$_____ '
@@ -228,6 +232,7 @@ echo "Installing Laranode"
 echo "--------------------------------------------------------------------------------"
 echo -e "\033[0m"
 
+
 cd /home/laranode_ln/panel
 # Tự động hóa Composer khi chạy bằng root
 if [ "$(id -u)" -eq 0 ]; then
@@ -237,7 +242,13 @@ else
     composer install
 fi
 
-cp .env.example .env
+# Đổi tên .env.example thành .env nếu .env chưa tồn tại
+if [ ! -f .env ]; then
+    cp .env.example .env
+    echo "Đã tạo file .env từ .env.example."
+else
+    echo "Đã tồn tại file .env, không ghi đè."
+fi
 sed -i "s#DB_PASSWORD=.*#DB_PASSWORD=\"$LARANODE_RANDOM_PASS\"#" ".env"
 sed -i "s#APP_URL=.*#APP_URL=\"http://$(curl icanhazip.com)\"#" ".env"
 # Thiết lập charset/collation cho MySQL
@@ -248,16 +259,26 @@ mysql -u root -p"$ROOT_RANDOM_PASS" laranode -e "ALTER TABLE users MODIFY name V
 grep -q "DB_CHARSET" .env || echo "DB_CHARSET=utf8mb4" >> .env
 grep -q "DB_COLLATION" .env || echo "DB_COLLATION=utf8mb4_unicode_ci" >> .env
 
-php artisan key:generate
-php artisan migrate
-php artisan db:seed
-php artisan storage:link
-php artisan reverb:install
+if [ -f artisan ]; then
+    php artisan key:generate
+    php artisan migrate
+    php artisan db:seed
+    php artisan storage:link
+    php artisan reverb:install
+else
+    echo "Không tìm thấy file artisan! Dừng cài đặt."
+    exit 1
+fi
 
 sed -i "s#VITE_REVERB_HOST=.*#VITE_REVERB_HOST=$(curl icanhazip.com)#" ".env"
 sed -i "s#REVERB_HOST=.*#REVERB_HOST=$(curl icanhazip.com)#" ".env"
 
-cp /home/laranode_ln/panel/laranode-scripts/templates/apache2-default.template /etc/apache2/sites-available/000-default.conf
+
+if [ -f /home/laranode_ln/panel/laranode-scripts/templates/apache2-default.template ]; then
+    cp /home/laranode_ln/panel/laranode-scripts/templates/apache2-default.template /etc/apache2/sites-available/000-default.conf
+else
+    echo "File apache2-default.template không tồn tại!"
+fi
 
 echo -e "\033[34m"
 echo "--------------------------------------------------------------------------------"
@@ -274,8 +295,17 @@ echo "Adding systemd services (queue worker and reverb)"
 echo "--------------------------------------------------------------------------------"
 echo -e "\033[0m"
 
-cp /home/laranode_ln/panel/laranode-scripts/templates/laranode-queue-worker.service /etc/systemd/system/laranode-queue-worker.service
-cp /home/laranode_ln/panel/laranode-scripts/templates/laranode-reverb.service /etc/systemd/system/laranode-reverb.service
+
+if [ -f /home/laranode_ln/panel/laranode-scripts/templates/laranode-queue-worker.service ]; then
+    cp /home/laranode_ln/panel/laranode-scripts/templates/laranode-queue-worker.service /etc/systemd/system/laranode-queue-worker.service
+else
+    echo "File laranode-queue-worker.service không tồn tại!"
+fi
+if [ -f /home/laranode_ln/panel/laranode-scripts/templates/laranode-reverb.service ]; then
+    cp /home/laranode_ln/panel/laranode-scripts/templates/laranode-reverb.service /etc/systemd/system/laranode-reverb.service
+else
+    echo "File laranode-reverb.service không tồn tại!"
+fi
 
 
 echo -e "\033[34m"
@@ -302,8 +332,16 @@ mkdir -p /home/laranode_ln/logs
 chown -R laranode_ln:laranode_ln /home/laranode_ln
 find /home/laranode_ln -type d -exec chmod 770 {} \;
 find /home/laranode_ln -type f -exec chmod 660 {} \;
-find /home/laranode_ln/panel/laranode-scripts/bin -type f -exec chmod 100 {} \;
-find /home/laranode_ln/panel/storage /home/laranode_ln/panel/bootstrap -type d -exec chmod 775 {} \;
+
+if [ -d /home/laranode_ln/panel/laranode-scripts/bin ]; then
+    find /home/laranode_ln/panel/laranode-scripts/bin -type f -exec chmod 100 {} \;
+fi
+if [ -d /home/laranode_ln/panel/storage ]; then
+    find /home/laranode_ln/panel/storage -type d -exec chmod 775 {} \;
+fi
+if [ -d /home/laranode_ln/panel/bootstrap ]; then
+    find /home/laranode_ln/panel/bootstrap -type d -exec chmod 775 {} \;
+fi
 
 
 systemctl daemon-reload
@@ -329,17 +367,22 @@ echo "Final Step: Automatically creating an admin account for Laranode..."
 
 
 # Cho phép nhập thông tin admin có dấu (Unicode)
-echo -e "\033[33mNhập tên admin (có thể dùng ký tự Unicode, ví dụ: Nguyễn Văn Á):\033[0m"
-read -r ADMIN_NAME
-echo -e "\033[33mNhập email admin:\033[0m"
-read -r ADMIN_EMAIL
-echo -e "\033[33mNhập mật khẩu admin:\033[0m"
-read -r ADMIN_PASS
-php artisan laranode:create-admin <<EOF
+
+if [ -f artisan ]; then
+    echo -e "\033[33mNhập tên admin (có thể dùng ký tự Unicode, ví dụ: Nguyễn Văn Á):\033[0m"
+    read -r ADMIN_NAME
+    echo -e "\033[33mNhập email admin:\033[0m"
+    read -r ADMIN_EMAIL
+    echo -e "\033[33mNhập mật khẩu admin:\033[0m"
+    read -r ADMIN_PASS
+    php artisan laranode:create-admin <<EOF
 $ADMIN_NAME
 $ADMIN_EMAIL
 $ADMIN_PASS
 EOF
+else
+    echo "Không tìm thấy file artisan! Không thể tạo tài khoản admin."
+fi
 
 echo -e "\033[32m --- ADMIN INFO ---\033[0m"
 echo "Admin Name: $ADMIN_NAME"
