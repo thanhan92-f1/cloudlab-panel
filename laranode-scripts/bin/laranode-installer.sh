@@ -368,26 +368,21 @@ echo "Final Step: Automatically creating an admin account for Laranode..."
 
 # Cho phép nhập thông tin admin có dấu (Unicode)
 
-if [ -f artisan ]; then
-    echo -e "\033[33mNhập tên admin (có thể dùng ký tự Unicode, ví dụ: Nguyễn Văn Á):\033[0m"
-    read -r ADMIN_NAME
-    echo -e "\033[33mNhập email admin:\033[0m"
-    read -r ADMIN_EMAIL
-    echo -e "\033[33mNhập mật khẩu admin:\033[0m"
-    read -r ADMIN_PASS
-    php artisan laranode:create-admin <<EOF
-$ADMIN_NAME
-$ADMIN_EMAIL
-$ADMIN_PASS
-EOF
-else
-    echo "Không tìm thấy file artisan! Không thể tạo tài khoản admin."
-fi
-
 echo -e "\033[32m --- ADMIN INFO ---\033[0m"
 echo "Admin Name: $ADMIN_NAME"
 echo "Admin Email: $ADMIN_EMAIL"
 echo "Admin Password: $ADMIN_PASS"
+
+if [ -f artisan ]; then
+    echo -e "\033[33m\n\n==============================="
+    echo -e "\033[33mBước cuối: TẠO TÀI KHOẢN ADMIN\033[0m"
+    echo -e "\033[33mVui lòng nhập thông tin trực tiếp theo hướng dẫn bên dưới:\033[0m"
+    echo -e "\033[36mcd /home/laranode_ln/panel && php artisan laranode:create-admin\033[0m"
+    echo -e "\033[33mSau đó nhập tên, email, mật khẩu admin theo yêu cầu.\033[0m"
+    echo -e "===============================\033[0m\n"
+else
+    echo "Không tìm thấy file artisan! Không thể tạo tài khoản admin."
+fi
 
 echo "Panel đã được cài đặt thành công! Đăng nhập tại: http://$(curl icanhazip.com)/login"
 echo "================================================================================"

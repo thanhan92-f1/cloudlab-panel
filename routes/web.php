@@ -1,3 +1,4 @@
+
 <?php
 
 use App\Http\Controllers\AccountsController;
@@ -36,6 +37,9 @@ Route::get('/websites/{website}/ssl/status', [WebsiteController::class, 'checkSs
 
 // PHP FPM Pools [Admin | User]
 Route::get('/php/get-versions', [PHPManagerController::class, 'getVersions'])->middleware(['auth'])->name('php.get-versions');
+Route::post('/php/install', [PHPManagerController::class, 'install'])->middleware(['auth', AdminMiddleware::class])->name('php.install');
+Route::post('/php/update', [PHPManagerController::class, 'update'])->middleware(['auth', AdminMiddleware::class])->name('php.update');
+Route::post('/php/remove', [PHPManagerController::class, 'remove'])->middleware(['auth', AdminMiddleware::class])->name('php.remove');
 
 // MySQL management [Admin | User]
 Route::get('/mysql', [MysqlController::class, 'index'])->middleware(['auth'])->name('mysql.index');
@@ -73,5 +77,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+// PHP Extension APIs [Admin]
+Route::get('/php/extensions', [PHPManagerController::class, 'getExtensions'])->middleware(['auth', AdminMiddleware::class]);
+Route::post('/php/extension/install', [PHPManagerController::class, 'installExtension'])->middleware(['auth', AdminMiddleware::class]);
+Route::post('/php/extension/remove', [PHPManagerController::class, 'removeExtension'])->middleware(['auth', AdminMiddleware::class]);
+// PHP Manager UI [Admin]
+Route::get('/php/manage', [PHPManagerController::class, 'showManager'])->middleware(['auth', AdminMiddleware::class])->name('php.manage');
 
 require __DIR__ . '/auth.php';
